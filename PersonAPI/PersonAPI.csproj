@@ -15,11 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PersonAPI.Infrastructure\PersonAPI.Infrastructure.csproj" />
+    <Folder Include="Middlewares\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Middlewares\" />
+    <ProjectReference Include="..\PersonAPI.Application\PersonAPI.Application.csproj" />
+    <ProjectReference Include="..\PersonAPI.Infrastructure\PersonAPI.Infrastructure.csproj" />
+    <ProjectReference Include="..\PersonAPI.Persistence\PersonAPI.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

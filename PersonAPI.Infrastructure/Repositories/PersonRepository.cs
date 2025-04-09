@@ -1,4 +1,6 @@
-﻿using PersonAPI.Application.Interfaces.Repositories;
+﻿using Microsoft.EntityFrameworkCore;
+using PersonAPI.Application.Interfaces.Repositories;
+using PersonAPI.Application.Services.Persons.FilterPersonServices;
 using PersonAPI.Domain.Entities;
 using PersonAPI.Persistence.Data;
 
@@ -24,18 +26,16 @@ public class PersonRepository : IPersonRepository
     {
         // Check if the person exists in the database
         var existingPerson = await _context.Persons.FindAsync(person.Id);
-        if (existingPerson == null) return existingPerson;
-
-        // Mapping properties from the incoming person to the existing person
-        existingPerson.FirstName = person.FirstName;
-        existingPerson.LastName = person.LastName;
-        existingPerson.DateOfBirth = person.DateOfBirth;
-        existingPerson.Gender = person.Gender;
-        existingPerson.BirthPlace = person.BirthPlace;
-
-        // Update the properties of the existing person
-        _context.Update(existingPerson);
-        await _context.SaveChangesAsync();
+        if (existingPerson != null)
+        {
+            // Mapping properties from the incoming person to the existing person
+            existingPerson.FirstName = person.FirstName;
+            existingPerson.LastName = person.LastName;
+            existingPerson.DateOfBirth = person.DateOfBirth;
+            existingPerson.Gender = person.Gender;
+            existingPerson.BirthPlace = person.BirthPlace;
+            await _context.SaveChangesAsync();
+        }
 
         return existingPerson;
     }
@@ -53,11 +53,33 @@ public class PersonRepository : IPersonRepository
         return existingPerson;
     }
 
-    public IQueryable<Person> GetAll()
+    public async Task<List<FilterPersonResponse>> GetAll(FilterPersonRequest request)
     {
         // Return a IQueryable list for query data
-        var person = _context.Persons.AsQueryable();
+        var persons = _context.Persons.AsQueryable();
+        if (!string.IsNullOrEmpty(request.Name))
+        {
+            persons = persons.Where(p => p.LastName!.Contains(request.Name) ||
+                                         p.FirstName!.Contains(request.Name));
+        }
+        if (request.Gender.HasValue)
+        {
+            persons = persons.Where(p => p.Gender == request.Gender);
+        }
+        if (request.BirthPlace != null)
+        {
+            persons = persons.Where(p => p.BirthPlace!.Contains(request.BirthPlace));
+        }
+        var result = await persons.Select(p => new FilterPersonResponse
+        {
+            Id = p.Id,
+            FirstName = p.FirstName,
+            LastName = p.LastName,
+            Gender = p.Gender,
+            BirthPlace = p.BirthPlace,
+            DateOfBirth = p.DateOfBirth,
+        }).ToListAsync();
 
-        return person;
+        return result;
     }
 }

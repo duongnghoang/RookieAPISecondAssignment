@@ -17,29 +17,7 @@ public class FilterPersonService : IFilterPersonService
 
     public async Task<Result<List<FilterPersonResponse>>> ExecuteAsync(FilterPersonRequest request)
     {
-        var persons = _personRepository.GetAll();
-        if (!string.IsNullOrEmpty(request.Name))
-        {
-            persons = persons.Where(p => p.LastName!.Contains(request.Name) ||
-                p.FirstName!.Contains(request.Name));
-        }
-        if (request.Gender.HasValue)
-        {
-            persons = persons.Where(p => p.Gender == request.Gender);
-        }
-        if (request.BirthPlace != null)
-        {
-            persons = persons.Where(p => p.BirthPlace!.Contains(request.BirthPlace));
-        }
-        var result = await persons.Select(p => new FilterPersonResponse
-        {
-            Id = p.Id,
-            FirstName = p.FirstName,
-            LastName = p.LastName,
-            Gender = p.Gender,
-            BirthPlace = p.BirthPlace,
-            DateOfBirth = p.DateOfBirth,
-        }).ToListAsync();
+        var result = await _personRepository.GetAll(request);
 
         return Result.Success(result);
     }
