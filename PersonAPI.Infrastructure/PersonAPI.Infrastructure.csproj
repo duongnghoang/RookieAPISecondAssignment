@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\PersonAPI.Application\PersonAPI.Application.csproj" />
     <ProjectReference Include="..\PersonAPI.Persistence\PersonAPI.Persistence.csproj" />
   </ItemGroup>

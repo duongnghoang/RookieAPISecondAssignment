@@ -1,91 +1,78 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PersonAPI.Application.Interfaces.Persons;
-using PersonAPI.Application.UseCases.Persons.AddPersonUseCases;
-using PersonAPI.Domain.Entities;
+using PersonAPI.Application.Services.Persons.AddPersonServices;
+using PersonAPI.Application.Services.Persons.FilterPersonServices;
+using PersonAPI.Application.Services.Persons.UpdatePersonServices;
+using PersonAPI.Domain.Shared;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace PersonAPI.Controllers
+namespace PersonAPI.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class PersonsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PersonsController : ControllerBase
+    private readonly IAddPersonService _addPersonService;
+    private readonly IDeletePersonService _deletePersonService;
+    private readonly IFilterPersonService _filterPersonService;
+    private readonly IUpdatePersonService _updatePersonService;
+
+    public PersonsController(IAddPersonService addPersonService, IUpdatePersonService updatePersonService,
+        IDeletePersonService deletePersonService, IFilterPersonService filterPersonService)
     {
-        private readonly IAddPersonUseCase _addPersonUseCase;
+        _addPersonService = addPersonService;
+        _updatePersonService = updatePersonService;
+        _deletePersonService = deletePersonService;
+        _filterPersonService = filterPersonService;
+    }
 
-        public PersonsController(IAddPersonUseCase addPersonUseCase)
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = (typeof(Result<AddPersonResponse>)))]
+    public async Task<IActionResult> AddPerson([FromBody] AddPersonRequest request)
+    {
+        var result = await _addPersonService.ExecuteAsync(request);
+        if (result.IsFailure)
         {
-            _addPersonUseCase = addPersonUseCase;
+            return BadRequest(result);
         }
 
-        // GET: api/persons
-        [HttpGet]
-        public ActionResult<List<Person>> GetAllPersons()
+        return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = (typeof(Result<UpdatePersonResponse>)))]
+    public async Task<IActionResult> UpdatePerson(Guid id, [FromBody] UpdatePersonRequest request)
+    {
+        request.Id = id;
+        var result = await _updatePersonService.ExecuteAsync(request);
+        if (result.IsFailure)
         {
-            //var persons = _personService.GetAllPersons();
-            return Ok();
+            return BadRequest(result);
         }
 
-        // GET: api/persons/{id}
-        [HttpGet("{id}")]
-        public ActionResult<Person> GetPersonById(int id)
+        return Ok(result);
+    }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeletePerson(Guid id)
+    {
+        var result = await _deletePersonService.ExecuteAsync(id);
+        if (result.IsFailure)
         {
-            try
-            {
-                //var person = _personService.GetPersonById(id);
-                return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            return BadRequest(result);
         }
 
-        // POST: api/persons
-        [HttpPost]
-        public async Task<IActionResult> AddPerson([FromBody] AddPersonRequest request)
-        {
-            var newPerson = await _addPersonUseCase.ExecuteAsync(request);
-            // Return 201 Created with the resource location
-            return Ok(newPerson);
-        }
+        return NoContent();
+    }
 
-        // PUT: api/persons/{id}
-        [HttpPut("{id}")]
-        public ActionResult<Person> UpdatePerson(int id, [FromBody] UpdatePersonRequest request)
-        {
-            try
-            {
-                // var updatedPerson = _personService.UpdatePerson(id, request);
-                return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
+    [HttpGet("filter")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = (typeof(Result<List<FilterPersonResponse>>)))]
+    public async Task<IActionResult> FilterPersons([FromQuery] FilterPersonRequest request)
+    {
+        var result = await _filterPersonService.ExecuteAsync(request);
 
-        // DELETE: api/persons/{id}
-        [HttpDelete("{id}")]
-        public IActionResult DeletePerson(int id)
-        {
-            try
-            {
-                DeletePerson(id);
-                return NoContent(); // 204 No Content for successful deletion
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        // POST: api/persons/filter
-        [HttpPost("filter")]
-        public ActionResult<List<Person>> FilterPersons([FromBody] FilterPersonsRequest request)
-        {
-            // var filteredPersons = _personService.FilterPersons(request);
-            return Ok();
-        }
+        return Ok(result);
     }
 }
